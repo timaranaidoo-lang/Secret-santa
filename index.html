@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Santa Envelopes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pine:#0f3d2e; --pine-deep:#0a2a20; --cream:#f6ecd9; --paper:#fffaf0;
+    --kraft:#e8d7b6; --kraft-dark:#d9c39a; --berry:#b3202a; --berry-dark:#8a1820;
+    --gold:#d8b25a; --ink:#3a2a1e; --muted:#7a6a58;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{
+    font-family:"DM Sans",system-ui,sans-serif;color:var(--cream);
+    background:radial-gradient(1200px 700px at 50% -10%,#1b5a43 0%,var(--pine) 45%,var(--pine-deep) 100%);
+    min-height:100vh;overflow-x:hidden;
+  }
+  .snow{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+  .flake{position:absolute;top:-12px;color:#fff;opacity:.75;animation:fall linear infinite}
+  @keyframes fall{to{transform:translateY(110vh) translateX(var(--drift))}}
+
+  main{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:32px 20px 64px}
+  .kicker{font-family:"Fraunces",serif;letter-spacing:.18em;text-transform:uppercase;font-size:13px;color:var(--gold);text-align:center;margin:0 0 6px}
+  h1{font-family:"Fraunces",serif;font-weight:700;font-size:clamp(30px,6vw,44px);text-align:center;margin:0 0 8px;line-height:1.1}
+  .sub{text-align:center;color:#cfe0d6;margin:0 auto 28px;max-width:460px;line-height:1.5}
+
+  .panel{background:rgba(255,250,240,.07);border:1px solid rgba(216,178,90,.35);border-radius:18px;padding:22px;margin:0 auto 20px;backdrop-filter:blur(2px)}
+  .panel h2{font-family:"Fraunces",serif;font-size:20px;margin:0 0 6px}
+  .panel p{margin:0 0 14px;color:#cfe0d6;line-height:1.5;font-size:15px}
+  label{font-size:14px;color:#cfe0d6;display:block;margin-bottom:6px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input[type=text],input[type=number]{
+    font:inherit;font-size:17px;padding:12px 14px;border-radius:12px;border:1px solid rgba(216,178,90,.5);
+    background:var(--paper);color:var(--ink);min-height:48px;
+  }
+  .budget-box{display:flex;align-items:center;background:var(--paper);border-radius:12px;border:1px solid rgba(216,178,90,.5);padding-left:14px;min-height:48px}
+  .budget-box span{color:var(--ink);font-weight:700;font-size:17px}
+  .budget-box input{border:0;width:110px;padding-left:6px}
+  .budget-box input:focus{outline:none}
+  button{font:inherit;cursor:pointer;border:0;border-radius:999px;min-height:48px;padding:0 22px;font-weight:700;font-size:16px;transition:transform .12s ease,background .2s}
+  button:active{transform:scale(.97)}
+  button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .btn-primary{background:var(--berry);color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .btn-primary:hover{background:var(--berry-dark)}
+  .btn-ghost{background:transparent;color:var(--cream);border:1px solid rgba(246,236,217,.45)}
+  .btn-ghost:hover{background:rgba(246,236,217,.08)}
+  .btn-small{min-height:40px;padding:0 16px;font-size:14px}
+  .err{color:#ffb4a8;font-size:14px;margin-top:10px;min-height:1em}
+  .group-tag{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+
+  .names{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 16px}
+  .chip{background:rgba(246,236,217,.12);border:1px solid rgba(246,236,217,.25);padding:6px 12px;border-radius:999px;font-size:14px}
+
+  .list{display:grid;gap:10px;margin-top:16px}
+  .item{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--paper);color:var(--ink);border-radius:14px;padding:12px 14px}
+  .item .who{display:flex;align-items:center;gap:12px}
+  .mini-env{width:40px;height:28px;background:var(--kraft);border-radius:4px;position:relative;overflow:hidden;flex:none}
+  .mini-env:before{content:"";position:absolute;inset:0;background:var(--kraft-dark);clip-path:polygon(0 0,100% 0,50% 60%)}
+  .mini-env:after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:var(--berry);left:15px;top:11px}
+  .who b{font-family:"Fraunces",serif;font-size:17px}
+  .who small{display:block;color:var(--muted);font-size:13px}
+  .item .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .item .btn-ghost{color:var(--ink);border-color:rgba(58,42,30,.3)}
+  .item .btn-ghost:hover{background:rgba(58,42,30,.06)}
+  .btn-wa{background:#1f8f4e;color:#fff;text-decoration:none;display:inline-flex;align-items:center;border-radius:999px;min-height:40px;padding:0 16px;font-size:14px;font-weight:700}
+  .btn-wa:hover{background:#18763f}
+  .note{font-size:13px;color:#cfe0d6;margin-top:14px;line-height:1.5}
+  .toggle{display:block;margin:26px auto 0}
+
+  /* ---------- Envelope ---------- */
+  .stage{display:flex;flex-direction:column;align-items:center;padding-top:8px}
+  .env{position:relative;width:min(360px,88vw);aspect-ratio:36/23;margin-top:170px;perspective:1200px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .env:focus-visible{outline:3px solid var(--gold);outline-offset:8px;border-radius:12px}
+  .env-back{position:absolute;inset:0;background:var(--kraft-dark);border-radius:10px;box-shadow:0 22px 40px rgba(0,0,0,.35)}
+  .letter{
+    position:absolute;left:6%;right:6%;top:6%;height:88%;z-index:2;background:var(--paper);border-radius:8px;
+    color:var(--ink);text-align:center;padding:16px 12px;
+    background-image:repeating-linear-gradient(45deg,rgba(179,32,42,.0) 0 10px,rgba(179,32,42,.0) 10px 20px);
+    border-top:6px solid var(--berry);
+    transition:transform 1s cubic-bezier(.2,.85,.25,1) .55s;
+  }
+  .letter .tiny{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .letter .gift-name{font-family:"Caveat",cursive;font-weight:700;font-size:clamp(46px,13vw,64px);line-height:1;color:var(--berry)}
+  .pocket{
+    position:absolute;inset:0;z-index:3;border-radius:10px;
+    background:linear-gradient(180deg,#f1e3c6 0%,var(--kraft) 100%);
+    clip-path:polygon(0 0,50% 46%,100% 0,100% 100%,0 100%);
+  }
+  .address{position:absolute;left:0;right:0;bottom:7%;text-align:center;font-family:"Caveat",cursive;color:var(--ink);line-height:1.05}
+  .address .to{font-size:clamp(28px,8vw,36px);font-weight:700;color:var(--berry-dark)}
+  .address .line{font-size:clamp(21px,6vw,26px)}
+  .stamp{position:absolute;right:5%;bottom:10%;width:34px;height:42px;background:var(--paper);border:2px dashed var(--berry);border-radius:3px;display:grid;place-items:center;font-size:18px;transform:rotate(6deg)}
+  .flap{
+    position:absolute;left:0;right:0;top:0;height:50%;z-index:4;
+    background:linear-gradient(180deg,var(--kraft-dark),#cfb688);
+    clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top center;
+    transition:transform .65s ease,z-index 0s linear .32s;
+  }
+  .seal{
+    position:absolute;left:50%;top:50%;z-index:5;width:50px;height:50px;margin:-30px 0 0 -25px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#d4363f,var(--berry) 55%,var(--berry-dark));
+    box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 0 0 4px rgba(0,0,0,.12);
+    display:grid;place-items:center;color:#ffd9c2;font-size:24px;transition:transform .35s ease,opacity .35s ease;
+  }
+  .env.open .seal{transform:scale(.4) rotate(40deg);opacity:0}
+  .env.open .flap{transform:rotateX(180deg);z-index:1}
+  .env.open .letter{transform:translateY(-66%)}
+  .hint{margin-top:26px;font-family:"Fraunces",serif;color:var(--gold);letter-spacing:.06em;animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.45}}
+  .after{margin-top:26px;text-align:center;opacity:0;transform:translateY(8px);transition:opacity .6s ease 1.5s,transform .6s ease 1.5s;max-width:420px}
+  .opened .after{opacity:1;transform:none}
+  .opened .hint{display:none}
+  .budget-tag{display:inline-block;background:var(--gold);color:var(--pine-deep);font-weight:700;border-radius:999px;padding:8px 18px;font-size:17px;margin-bottom:12px}
+  .after p{color:#cfe0d6;line-height:1.5;margin:0}
+  .confetti{position:fixed;top:-20px;width:9px;height:14px;z-index:20;pointer-events:none;animation:drop 2.8s cubic-bezier(.3,.6,.4,1) forwards}
+  @keyframes drop{to{transform:translateY(105vh) rotate(var(--spin)) translateX(var(--drift));opacity:.9}}
+
+  .modal{position:fixed;inset:0;background:rgba(5,20,15,.7);display:none;align-items:center;justify-content:center;z-index:30;padding:20px}
+  .modal.show{display:flex}
+  .modal .box{background:var(--paper);color:var(--ink);border-radius:18px;padding:22px;max-width:380px}
+  .modal h3{font-family:"Fraunces",serif;margin:0 0 8px}
+  .modal p{margin:0 0 16px;line-height:1.5}
+  .modal .btn-ghost{color:var(--ink);border-color:rgba(58,42,30,.3)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--paper);color:var(--ink);padding:12px 18px;border-radius:999px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:transform .3s ease;z-index:40}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  textarea.fallback{width:100%;min-height:120px;font:inherit;font-size:14px;border-radius:10px;padding:10px;margin-top:8px}
+  .hidden{display:none !important}
+  @media (prefers-reduced-motion:reduce){
+    .flake,.confetti{display:none}
+    .letter,.flap,.seal,.after{transition-duration:.01s !important;transition-delay:0s !important}
+    .hint{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="snow" id="snow" aria-hidden="true"></div>
+
+<main>
+  <!-- Envelope view -->
+  <section id="envView" class="hidden">
+    <p class="kicker">Secret Santa 2026</p>
+    <div class="stage" id="stage">
+      <div class="env" id="env" role="button" tabindex="0" aria-label="Open your Secret Santa envelope">
+        <div class="env-back"></div>
+        <div class="letter">
+          <div class="tiny">🎁 You're buying for</div>
+          <div class="gift-name" id="giftName"></div>
+        </div>
+        <div class="pocket">
+          <div class="address">
+            <div class="to" id="toName"></div>
+            <div class="line">your Secret Santa is…</div>
+          </div>
+          <div class="stamp" aria-hidden="true">🎄</div>
+        </div>
+        <div class="flap"></div>
+        <div class="seal" aria-hidden="true">❄</div>
+      </div>
+      <div class="hint">Tap the envelope to open</div>
+      <div class="after" aria-live="polite">
+        <div class="budget-tag" id="budgetTag"></div>
+        <p>Shhh 🤫 keep it a secret! Don't show this screen to anyone. You can come back to this link any time if you forget.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Home view -->
+  <section id="homeView" class="hidden">
+    <p class="kicker">Secret Santa 2026</p>
+    <h1>Your envelope awaits 🎅</h1>
+    <p class="sub">Got a code from the organiser? Pop it in below to open your envelope.</p>
+
+    <div class="panel">
+      <form id="codeForm" class="row">
+        <input type="text" id="codeInput" placeholder="e.g. ABC-DEF-GHI" aria-label="Envelope code" autocomplete="off" autocapitalize="characters" style="flex:1;min-width:180px;text-transform:uppercase">
+        <button class="btn-primary" type="submit">Open envelope</button>
+      </form>
+      <div class="err" id="codeErr" role="alert"></div>
+    </div>
+
+    <button class="btn-ghost toggle" id="orgToggle" type="button">I'm the organiser</button>
+
+    <div id="orgPanel" class="hidden">
+      <p class="sub" style="margin:22px auto 16px">Each group draws on its own, so the guys only get guys and the girls only get girls. Nobody draws themselves, every name is picked exactly once, and you won't see the matches here.</p>
+      <div id="groups"></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="box">
+    <h3 id="modalTitle">Draw again?</h3>
+    <p id="modalText">This shuffles everyone again.</p>
+    <div class="row">
+      <button class="btn-primary btn-small" id="modalYes" type="button">Yes, redraw</button>
+      <button class="btn-ghost btn-small" id="modalNo" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+(function(){
+  // ---------- Config ----------
+  const GROUPS = [
+    { id: "guys",  label: "The guys",  names: ["Parker","Shaakir","Astin","Keenan","Vaughn","Azhar","Shaqir"] },
+    { id: "girls", label: "The girls", names: ["Zahra","Kaylin","Sameenah","Chelsea","Sadeeqah","Timara","Safaa"] }
+  ];
+  const DEFAULT_BUDGET = 150;
+  const CLAUDE_URL = "https://claude.ai/artifact/LHgTkzYwAxehU4Z4v2KNzB";
+  const STORE_KEY = "ss-draw-2026-v2";
+
+  // Links point at wherever this page is hosted (e.g. GitHub Pages); inside Claude they use the artifact link.
+  function baseUrl(){
+    try {
+      if (window.top === window.self && /^https?:$/.test(location.protocol)) return location.href.split("#")[0];
+    } catch(e){}
+    return CLAUDE_URL;
+  }
+
+  // ---------- Code encoding (each match is hidden inside a short code) ----------
+  const GB = 4n, PB = 10n;                 // up to 4 groups, 10 people per group
+  const M = 100000000000031n;              // prime
+  const A = 482711293n, B = 271828182n;
+  function modInv(a, m){
+    let [or_, r] = [a % m, m], [os, s] = [1n, 0n];
+    while (r !== 0n){ const q = or_ / r; [or_, r] = [r, or_ - q*r]; [os, s] = [s, os - q*s]; }
+    return ((os % m) + m) % m;
+  }
+  const AINV = modInv(A, M);
+  const checksum = (salt,k,g,r,b) => (salt*7 + k*17 + g*31 + r*53 + b*3 + 11) % 97;
+
+  function encode(salt, k, g, r, budget){
+    let n = BigInt(salt);
+    n = n*GB + BigInt(k);
+    n = n*PB + BigInt(g);
+    n = n*PB + BigInt(r);
+    n = n*10000n + BigInt(budget);
+    n = n*97n + BigInt(checksum(salt,k,g,r,budget));
+    return ((n*A + B) % M).toString(36).padStart(9,"0");
+  }
+  function decode(tok){
+    tok = String(tok||"").toLowerCase().replace(/[^0-9a-z]/g,"").replace(/^santa/,"");
+    if (!tok || tok.length > 10) return null;
+    let x = 0n;
+    for (const ch of tok){ const v = parseInt(ch,36); if (isNaN(v)) return null; x = x*36n + BigInt(v); }
+    if (x >= M) return null;
+    let n = (((x - B) % M + M) % M) * AINV % M;
+    const chk = Number(n % 97n); n /= 97n;
+    const budget = Number(n % 10000n); n /= 10000n;
+    const r = Number(n % PB); n /= PB;
+    const g = Number(n % PB); n /= PB;
+    const k = Number(n % GB); n /= GB;
+    const salt = Number(n);
+    const grp = GROUPS[k];
+    if (!grp || salt >= 10000 || budget < 1 || g === r || g >= grp.names.length || r >= grp.names.length) return null;
+    if (checksum(salt,k,g,r,budget) !== chk) return null;
+    return { k, g, r, budget };
+  }
+  const prettyCode = t => t.toUpperCase().replace(/(.{3})(?=.)/g,"$1-");
+
+  // ---------- Fair random draw (no one gets themselves) ----------
+  function rand(n){ const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+  function derangement(n){
+    while (true){
+      const p = [...Array(n).keys()];
+      for (let i = n-1; i > 0; i--){ const j = rand(i+1); [p[i],p[j]] = [p[j],p[i]]; }
+      if (p.every((v,i) => v !== i)) return p;
+    }
+  }
+
+  // ---------- Storage (organiser's own browser only) ----------
+  function loadAll(){ try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e){ return {}; } }
+  function saveGroup(id, d){ try { const all = loadAll(); all[id] = d; localStorage.setItem(STORE_KEY, JSON.stringify(all)); } catch(e){} }
+
+  // ---------- Helpers ----------
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600); }
+  function messageFor(name, tok, budget){
+    const base = baseUrl();
+    return `🎅 Hi ${name}! Your Secret Santa envelope is ready.\n\n` +
+      `Open it here: ${base}#santa-${tok}\n\n` +
+      `Your private code: ${prettyCode(tok)} (if the link doesn't open your envelope, go to ${base} and enter the code)\n\n` +
+      `Budget: R${budget}. Shhh, don't tell anyone who you get! 🤫`;
+  }
+
+  // ---------- Snow ----------
+  (function snow(){
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const s = $("snow");
+    for (let i=0;i<34;i++){
+      const f = document.createElement("div");
+      f.className="flake"; f.textContent = Math.random()<.5 ? "❄" : "•";
+      f.style.left = Math.random()*100+"vw";
+      f.style.fontSize = (8+Math.random()*12)+"px";
+      f.style.animationDuration = (8+Math.random()*10)+"s";
+      f.style.animationDelay = (-Math.random()*18)+"s";
+      f.style.setProperty("--drift",(Math.random()*80-40)+"px");
+      s.appendChild(f);
+    }
+  })();
+
+  function confetti(){
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const colors=["#b3202a","#d8b25a","#f6ecd9","#2e8b57","#ffffff"];
+    for (let i=0;i<90;i++){
+      const c=document.createElement("div"); c.className="confetti";
+      c.style.left=Math.random()*100+"vw";
+      c.style.background=colors[i%colors.length];
+      c.style.animationDelay=(Math.random()*.6)+"s";
+      c.style.animationDuration=(2.2+Math.random()*1.6)+"s";
+      c.style.setProperty("--spin",(Math.random()*720-360)+"deg");
+      c.style.setProperty("--drift",(Math.random()*160-80)+"px");
+      c.style.borderRadius = Math.random()<.4 ? "50%" : "2px";
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(),4600);
+    }
+  }
+
+  // ---------- Envelope view ----------
+  function showEnvelope(info){
+    const names = GROUPS[info.k].names;
+    $("homeView").classList.add("hidden");
+    $("envView").classList.remove("hidden");
+    const env=$("env"), stage=$("stage");
+    env.classList.remove("open"); stage.classList.remove("opened");
+    $("toName").textContent = names[info.g] + ",";
+    $("giftName").textContent = names[info.r];
+    $("budgetTag").textContent = "Budget: R" + info.budget;
+    document.title = names[info.g] + "'s Secret Santa";
+    let opened=false;
+    const open = () => {
+      if (opened) return; opened=true;
+      env.classList.add("open"); stage.classList.add("opened");
+      env.setAttribute("aria-label", "Your Secret Santa is " + names[info.r]);
+      setTimeout(confetti, 1300);
+    };
+    env.onclick = open;
+    env.onkeydown = e => { if (e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } };
+  }
+
+  function showHome(){
+    $("envView").classList.add("hidden");
+    $("homeView").classList.remove("hidden");
+    document.title = "Secret Santa Envelopes";
+    if (Object.keys(loadAll()).length) openOrg();
+  }
+
+  function route(){
+    const h = location.hash.replace(/^#/,"");
+    if (/^santa-[0-9a-z]+$/i.test(h)){
+      const info = decode(h);
+      if (info){ showEnvelope(info); return; }
+      showHome(); $("codeErr").textContent = "Hmm, that link doesn't look right. Try typing your code below.";
+      return;
+    }
+    showHome();
+  }
+
+  // ---------- Organiser ----------
+  function openOrg(){ $("orgPanel").classList.remove("hidden"); $("orgToggle").classList.add("hidden"); }
+  $("orgToggle").onclick = openOrg;
+
+  let pendingGroup = null;
+  $("modalNo").onclick = () => { $("modal").classList.remove("show"); pendingGroup = null; };
+  $("modalYes").onclick = () => { $("modal").classList.remove("show"); if (pendingGroup !== null) doDraw(pendingGroup); pendingGroup = null; };
+  function askRedraw(k){
+    pendingGroup = k;
+    $("modalText").textContent = `This reshuffles ${GROUPS[k].label.toLowerCase()} only. Any links or codes you've already sent to ${GROUPS[k].label.toLowerCase()} won't match the new draw.`;
+    $("modal").classList.add("show");
+  }
+
+  function buildGroups(){
+    const wrap = $("groups"); wrap.innerHTML = "";
+    const saved = loadAll();
+    GROUPS.forEach((grp, k) => {
+      const d = saved[grp.id];
+      const el = document.createElement("div");
+      el.className = "panel"; el.id = "grp-" + k;
+      el.innerHTML = `
+        <span class="group-tag">Group ${k+1}</span>
+        <h2>${esc(grp.label)}</h2>
+        <div class="names">${grp.names.map(n=>`<span class="chip">${esc(n)}</span>`).join("")}</div>
+        <label for="budget-${k}">Gift budget</label>
+        <div class="row">
+          <div class="budget-box"><span>R</span><input type="number" id="budget-${k}" min="1" max="9999" step="1" value="${d ? d.budget : DEFAULT_BUDGET}"></div>
+          <button class="btn-primary" type="button" data-draw>${d ? "Draw again" : "Draw names 🎲"}</button>
+        </div>
+        <div class="err" role="alert" data-err></div>
+        <div data-results class="${d ? "" : "hidden"}">
+          <p style="margin-top:14px">Send each person <b>only their own</b> message. The link opens their envelope straight away, and the code is a backup.</p>
+          <div class="list" data-list></div>
+          <div class="hidden" data-fallback>
+            <p class="note">Your browser blocked copying. Select the text below and copy it yourself:</p>
+            <textarea class="fallback" readonly></textarea>
+          </div>
+          <p class="note">Budget for this draw: <b>R${d ? d.budget : ""}</b>. Drawing again makes this group's old links and codes stop matching, so only redraw before you've sent them.</p>
+        </div>`;
+      wrap.appendChild(el);
+      el.querySelector("[data-draw]").onclick = () => { if (loadAll()[grp.id]) askRedraw(k); else doDraw(k); };
+      if (d) renderList(k, d);
+    });
+  }
+
+  function doDraw(k){
+    const grp = GROUPS[k], el = $("grp-" + k);
+    const b = Math.round(Number($("budget-" + k).value));
+    if (!b || b < 1 || b > 9999){ el.querySelector("[data-err]").textContent = "Enter a budget between R1 and R9999."; return; }
+    const d = { salt: rand(10000), budget: b, perm: derangement(grp.names.length) };
+    saveGroup(grp.id, d);
+    buildGroups();
+    toast(grp.label + ": names drawn! 🎉");
+  }
+
+  function renderList(k, d){
+    const grp = GROUPS[k], el = $("grp-" + k);
+    const list = el.querySelector("[data-list]"), fb = el.querySelector("[data-fallback]");
+    grp.names.forEach((name, g) => {
+      const tok = encode(d.salt, k, g, d.perm[g], d.budget);
+      const msg = messageFor(name, tok, d.budget);
+      const row = document.createElement("div"); row.className = "item";
+      row.innerHTML = `<div class="who"><div class="mini-env"></div><div><b>${esc(name)}</b><small>Code: ${prettyCode(tok)}</small></div></div>
+        <div class="acts">
+          <button class="btn-ghost btn-small" type="button">Copy message</button>
+          <a class="btn-wa" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
+        </div>`;
+      row.querySelector("button").onclick = () => {
+        const done = () => { toast("Copied " + name + "'s message"); fb.classList.add("hidden"); };
+        const fail = () => { fb.classList.remove("hidden"); const ta = fb.querySelector("textarea"); ta.value = msg; ta.focus(); ta.select(); };
+        try { navigator.clipboard.writeText(msg).then(done, fail); } catch(e){ fail(); }
+      };
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- Code entry ----------
+  $("codeForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const info = decode($("codeInput").value);
+    if (!info){ $("codeErr").textContent = "That code doesn't match an envelope. Double-check it with the organiser."; return; }
+    $("codeErr").textContent = "";
+    showEnvelope(info);
+  });
+
+  buildGroups();
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
